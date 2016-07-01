@@ -1,2 +1,2 @@
 # GWMLR
-Geo
+Geographically Weighted Multinomial Logistic Regression
