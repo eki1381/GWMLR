@@ -1,6 +1,5 @@
 GWMLR <- function(y,x,dm,b,kernel = "gaussian"){
   library(Matrix)
-  library(MASS)
   
   y.design.1 <- model.matrix(~-1 + .,data = y)
   x.design.1 <- model.matrix(~.,data = x)
@@ -27,22 +26,25 @@ GWMLR <- function(y,x,dm,b,kernel = "gaussian"){
     diff.llike <- 1e9
     
     weight <- kernel(dm,b,i,kernel = kernel)
+    weight.rep <- rep(diag(weight),J-1)
+    
+    list2 <- rep(list(weight),J-1)
+    weighted <- as.matrix(bdiag(list2))
+    x.design.2.weighted <- weighted%*%x.design.2
     
     iterations <- 1
-    while((iterations <= 50) & (diff.beta > 1e-6) & (diff.llike > 1e-7)){
+    while((iterations <= 20) & (diff.beta > 1e-6) & (diff.llike > 1e-7)){
       iterations <- iterations + 1
       p.temp <- prob(x.design.1,beta.1.temp)
       p <- as.vector(p.temp)
       
       w <- gww(p.temp,J,N,weight)
       
-      weight.rep <- rep(diag(weight),J-1)
-      
-      der1.llike <- t(x.design.2)%*%(weight.rep*(y.design.3-p))
-      der2.llike <- t(x.design.2)%*%w%*%x.design.2
+      der1.llike <- t(x.design.2.weighted)%*%(y.design.3-p)
+      der2.llike <- t(x.design.2)%*%w%*%x.design.2.weighted
       
       beta.2 <- beta.1
-      beta.1 <- beta.2 +(chol2inv(chol(der2.llike))%*%der1.llike)
+      beta.1 <- beta.2 + (solve(der2.llike)%*%der1.llike)
       
       beta.1.temp <- matrix(beta.1,K+1,J-1)
       beta.2.temp <- matrix(beta.2,K+1,J-1)
@@ -56,7 +58,7 @@ GWMLR <- function(y,x,dm,b,kernel = "gaussian"){
     aic <- as.numeric(2*(K+1)*(J-1)-2*(llike.1))
     se <- se(solve(der2.llike))
 
-    coef.matrix <- rbind(coef.matrix,t(beta.1.temp))
+    coef.matrix <- rbind(coef.matrix,as.vector(t(beta.1.temp)))
     se.matrix <- rbind(se.matrix,se)
   }
   res <- cbind(coef.matrix[-1,],se.matrix[-1,])
