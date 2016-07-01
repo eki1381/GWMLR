@@ -5,11 +5,11 @@ gww <- function(p.temp,J,N,weight){
       w.temp <- matrix(0,N,N)
       if(j == jprime){
         for(i in 1:N){
-          w.temp[i,i] <- weight[i,i]*p.temp[i,j]*(1-p.temp[i,j])
+          w.temp[i,i] <- p.temp[i,j]*(1-p.temp[i,j])
         }
       }else{
         for(i in 1:N){
-          w.temp[i,i] <- (-1)*weight[i,i]*p.temp[i,j]*p.temp[i,jprime]
+          w.temp[i,i] <- (-1)*p.temp[i,j]*p.temp[i,jprime]
         }
       }
       list.w <- c(list.w,w.temp)
