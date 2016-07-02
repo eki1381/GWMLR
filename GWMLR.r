@@ -1,8 +1,8 @@
-GWMLR <- function(y,x,dm,b,kernel = "gaussian"){
+GWMLR <- function(y.design.1,x.design.1,dm,b,kernel = "gaussian"){
   library(Matrix)
   
-  y.design.1 <- model.matrix(~-1 + .,data = y)
-  x.design.1 <- model.matrix(~.,data = x)
+  # y.design.1 <- model.matrix(~-1 + .,data = y)
+  # x.design.1 <- model.matrix(~.,data = x)
   N <- nrow(y.design.1)
   K <- ncol(x.design.1) - 1
   J <- ncol(y.design.1)
@@ -13,6 +13,7 @@ GWMLR <- function(y,x,dm,b,kernel = "gaussian"){
   
   coef.matrix <- matrix(NA,1,(K+1)*(J-1))
   se.matrix <- matrix(NA,1,(K+1)*(J-1))
+  tval.matrix <- matrix(NA,1,(K+1)*(J-1))
   
   for(i in 1:N){
     beta.1.temp <- matrix(0,K+1,J-1)
@@ -56,11 +57,33 @@ GWMLR <- function(y,x,dm,b,kernel = "gaussian"){
     }
     llike.1 <- as.numeric(llike.1)
     aic <- as.numeric(2*(K+1)*(J-1)-2*(llike.1))
-    se <- se(solve(der2.llike))
-
+    varcov <- solve(der2.llike)
+    se <- sqrt(diag(varcov))
+    tval <- as.vector(t(beta.1.temp))/se
     coef.matrix <- rbind(coef.matrix,as.vector(t(beta.1.temp)))
     se.matrix <- rbind(se.matrix,se)
+    tval.matrix <- rbind(tval.matrix,tval)
   }
-  res <- cbind(coef.matrix[-1,],se.matrix[-1,])
-  return(res)
+  coef.matrix <- coef.matrix[-1,]
+  se.matrix <- se.matrix[-1,]
+  tval.matrix <- tval.matrix[-1,]
+  rownames(coef.matrix) <- c(as.character(1:N))
+  colname <- c()
+  sename <- c()
+  tvname <- c()
+  for(j in 1:(J-1)){
+    for(k in 1:(K+1)){
+      varname <- paste(colnames(x.design.1)[k],"=",j)
+      colname <- c(colname,varname)
+      setname <- paste(colnames(x.design.1)[k],"=",j,"_SE")
+      sename <- c(sename,setname)
+      tvtname <- paste(colnames(x.design.1)[k],"=",j,"_TV")
+      tvname <- c(tvname,tvtname)
+    }
+  }
+  colnames(coef.matrix) <- colname
+  colnames(se.matrix) <- sename
+  colnames(tval.matrix) <- tvname
+  result <- cbind(coef.matrix,se.matrix,tval.matrix)
+  list(coefficients = result)
 }
