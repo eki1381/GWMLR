@@ -43,7 +43,7 @@ GWMLR <- function(y.design.1,x.design.1,dm,b,kernel = "gaussian",dp){
       p.temp <- prob(x.design.1,beta.1.temp)
       p <- as.vector(p.temp)
       
-      w <- gww(p.temp,J,N,weight)
+      w <- w(p.temp,J,N,weight)
       
       der1.llike <- t(x.design.2.weighted)%*%(y.design.3-p)
       der2.llike <- t(x.design.2)%*%w%*%x.design.2.weighted
